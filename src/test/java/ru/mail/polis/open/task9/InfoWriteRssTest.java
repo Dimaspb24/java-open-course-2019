@@ -5,16 +5,20 @@ import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.FeedException;
 import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class InfoWriteRssTest {
 
@@ -22,21 +26,8 @@ public class InfoWriteRssTest {
     private static String file;
     private static InfoWriterRss writerRss;
 
-    interface Executable {
-        void execute();
-    }
-
-    class Runner {
-        // в параметр должны передать какой-то объект реализующий интрефейс Executable
-        // у этого объекта выполнится свой метод execute
-        public Executable run(Executable e) {
-            e.execute();
-            return e;
-        }
-    }
-
     @BeforeAll
-    static void initWriterRss() {
+    static void initWriterRss() throws MalformedURLException {
         link = "http://mcomp.org/feed/";
         file = "result.txt";
         writerRss = new InfoWriterRss(link, file);
@@ -44,37 +35,18 @@ public class InfoWriteRssTest {
 
     @Test
     void testThrowExceptionIncorrectArguments() {
-//        Runner runner = new Runner();
-//        assertThrows(MalformedURLException.class, (org.junit.jupiter.api.function.Executable) runner.run(new Executable() {
-//            @Override
-//            public void execute(){
-//                InfoWriterRss ifr = new InfoWriterRss(null, file);
-//            }
-//        }));
-
-        Assertions.assertThrows(IllegalArgumentException.class, () -> new InfoWriterRss(null, file));
-        Assertions.assertThrows(NullPointerException.class, () -> new InfoWriterRss(link, null));
-        Assertions.assertThrows(Exception.class, () -> new InfoWriterRss(null, null));
+        assertThrows(MalformedURLException.class, () -> new InfoWriterRss(null, file));
+        assertThrows(NullPointerException.class, () -> new InfoWriterRss(link, null));
+        assertThrows(Exception.class, () -> new InfoWriterRss(null, null));
     }
-
 
     @Test
     void testWorkingMethods() {
-        /*writerRss.build();
-        try {
-            writerRss.writeInfoToFile();
-        } catch (BuildFailedException e) {
-            e.printStackTrace();
-        }*/
+        assertThrows(BuildFailedException.class, () -> writerRss.writeInfoToFile());
 
-        //Проверка что нельзя записать файл до построения
-        Assertions.assertThrows(BuildFailedException.class, () -> writerRss.writeInfoToFile());
-
-        //ПРоверка что после потроения не вылетает исключение
         writerRss.build();
-        Assertions.assertDoesNotThrow(() -> writerRss.writeInfoToFile());
+        assertDoesNotThrow(() -> writerRss.writeInfoToFile());
 
-        //Запись из xml файла в коллекцию из массивов строк
         List<String[]> listInfo = new ArrayList<>();
         try {
             SyndFeed feed = new SyndFeedInput().build(new XmlReader(new File("XTest.xml")));
@@ -92,15 +64,6 @@ public class InfoWriteRssTest {
             e.printStackTrace();
         }
 
-//        writerRss.build();
-//
-//        try {
-//            writerRss.writeInfoToFile();
-//        } catch (BuildFailedException e) {
-//            e.printStackTrace();
-//        }
-
-        //Проверки на то соответствуют ли инфа с сайта с инфой их XTest.xml
         try (BufferedReader reader = new BufferedReader(new FileReader(new File(file)))) {
             for (String[] info : listInfo) {
                 assertEquals(
@@ -124,7 +87,6 @@ public class InfoWriteRssTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
 
     }
 }
